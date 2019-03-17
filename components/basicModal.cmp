@@ -1,0 +1,140 @@
+<aura:component controller="serverSideController" implements="force:lightningQuickActionWithoutHeader,force:hasRecordId">
+<!-- use notifications to display error msg on top of modal -->
+<lightning:notificationsLibrary aura:id="notifLib"/>
+
+<aura:attribute name="newLead" type="Lead" default="{sobjectType: 'Lead', Company: 'Salesforce'}"/>
+<aura:attribute name="recordId" type="String"/>
+
+<!-- attributes we use with our custom validations -->
+<aura:attribute name="hasEmailErrors" type="Boolean" default="true" />
+<aura:attribute name="hasPhoneErrors" type="Boolean" default="true" />
+<aura:attribute name="hasPicklistErrors" type="Boolean" default="true" />
+
+<!-- name and address are both compound fields in Lightning storing multiple inputs -->
+<aura:attribute name="nameFields" type="List" default="['Salutation','firstName', 'lastName']"/>
+<aura:attribute name="addressFields" type="List" default="['Street','City','State','postalCode','Country']"/>
+<aura:attribute name="postalCode" type="String" />
+<!-- variable we use for the fetchPicklistValues in the helper -->
+<aura:attribute name="objectName" type="Lead" default="{sobjectType: 'Lead'}"/>
+
+<!-- an example of manually defining select options for a picklist -->
+<aura:attribute name="salutationOptions" type="List" default="[{'label': 'Mr.', 'value': 'Mr.'},
+                                                               {'label': 'Ms.', 'value': 'Ms.'},
+                                                               {'label': 'Mrs.', 'value': 'Mrs.'},
+                                                               {'label': 'Dr.', 'value': 'Dr.'},
+                                                               {'label': 'Prof.', 'value': 'Prof.'}]"/>
+<!-- for this picklist example we will fetch values from the server -->
+<aura:attribute name="industryPicklistSelection" type="String"/>
+<aura:attribute name="date" type="Date"/>
+<aura:handler name="init" value="{!this}" action="{!c.onInit}"/>
+
+ <div style="height: 640px;">
+  <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+    <div class="slds-modal__container" style="height: 540px; width: 440px">
+      <header class="slds-modal__header">
+        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close">
+          <span class="slds-assistive-text">Close</span>
+        </button>
+        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">New Lead</h2>
+      </header>
+     <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+      <!-- add modal content here -->
+      <form>
+           <div class="slds-form slds-form_stacked"> <!-- start address field markup -->
+            <div class="slds-form-element slds-p-top_medium">
+              <div class="slds-form-element__control">
+               <lightning:inputName
+                     label="First Name and Salutation"
+                     name="name"
+                     aura:id="formInput"
+                     required="true"
+                     fieldsToDisplay="{!v.nameFields}"
+                     options="{!v.salutationOptions}"
+                     salutation="{!v.newLead.Salutation}"
+                     firstName="{!v.newLead.FirstName}"
+                     lastName="{!v.newLead.LastName}" />
+                </div>
+              </div>
+            </div> <!-- close address field markup -->
+            <div class="slds-form-element"> <!-- start date component markup -->
+              <div class="slds-form-element__control">
+                <lightning:input
+                     type="date"
+                     name="date"
+                     aura:id="formInput"
+                     label="Date of Birth"
+                     required="true"
+                     value="{!v.newLead.Date_Of_Birth__c}" />
+              </div>
+            </div> <!-- end date component markup -->
+           <div class="slds-form-element"> <!-- start the address markup -->
+              <div class="slds-form-element__control">
+                <div>
+                 <lightning:inputAddress
+                        aura:id="formInput"
+                        addressLabel="Address"
+                        streetLabel="Street"
+                        cityLabel="City"
+                        countryLabel="Country"
+                        provinceLabel="State"
+                        postalCodeLabel="Postal Code"
+                        street="{!v.newLead.Street}"
+                        city="{!v.newLead.City}"
+                        province="{!v.newLead.State}"
+                        postalCode ="{!v.postalCode}"
+                        country="{!v.newLead.Country}"
+                        required="true" />
+             </div>
+            </div>
+          </div>  <!-- end the address markup -->
+         <div class="slds-form-element"> <!-- start work phone markup -->
+          <div class="slds-form-element__control slds-p-around_xx-small">
+             <ui:inputPhone
+               aura:id="phoneId"
+               label="Work Phone"
+               change='{!c.validatePhoneNumber}'/>
+           </div>
+         </div> <!-- end work phone markup -->
+       <div class="slds-form-element">   <!-- start mobile phone markup -->
+        <div class="slds-form-element__control slds-p-around_xx-small">
+           <ui:inputPhone
+               aura:id="mobilePhoneId"
+               label="Mobile Phone"
+               change='{!c.validatePhoneNumber}'/>
+           </div>
+         </div><!-- end mobile phone markup -->
+         <div class="slds-form-element"> <!-- start email markup -->
+            <div class="slds-form-element__control">
+              <ui:inputText aura:id="emailId" label="Email" value="{!v.newLead.Email}" change="{!c.validateEmail}" class="slds-input"/>
+            </div>
+          </div><!-- end email markup -->
+           <div class="slds-form slds-form_stacked"> <!-- start company field markup -->
+            <div class="slds-form-element slds-p-top_medium">
+              <div class="slds-form-element__control">
+               <lightning:input
+                     label="Company"
+                     name="company"
+                     aura:id="formInput"
+                     value="{!v.newLead.Company}"/>
+                </div>
+              </div>
+            </div> <!-- close company field markup -->
+          <!-- start industry picklist markup -->
+            <div class="slds-form-element">
+              <div class="slds-form-element__control">
+                <ui:inputSelect label="Industry" aura:id="industryAuraID" class="slds-select"
+                  change="{!c.onSelectIndustry}" required="true"/>
+              </div>
+            </div> <!-- end industry picklist markup -->
+        </form>
+       <!-- end main modal content -->
+      </div>
+      <footer class="slds-modal__footer">
+        <button class="slds-button slds-button_neutral" onclick="{!c.onCancel}">Cancel</button>
+        <button class="slds-button slds-button_brand" onclick="{!c.onSave}">Save</button>
+      </footer>
+    </div>
+  </section>
+  <div class="slds-backdrop slds-backdrop_open"></div>
+</div>
+</aura:component>
