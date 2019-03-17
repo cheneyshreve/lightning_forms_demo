@@ -11,9 +11,9 @@ and 'serverSideControllerTest'. Copy and paste in the code from the Apex folder.
 For help with any of these steps, reference the blog, or checkout the gifs below.<br>
 
 Installing a quick action:<br>
-![alt text](https://raw.githubusercontent.com/cheneyshreve/lightning_forms_demo/images/wireTheQuickAction.gif)
+![alt text](https://raw.githubusercontent.com/cheneyshreve/lightning_forms_demo/lightningComponents/images/wireTheQuickAction.gif)
 <br>
 
 What the end result looks like:<br>
-![alt text](https://raw.githubusercontent.com/cheneyshreve/lightning_forms_demo/images/quickActionDemo.gif)
+![alt text](https://raw.githubusercontent.com/cheneyshreve/lightning_forms_demo/lightningComponents/images/quickActionDemo.gif)
 <br>
