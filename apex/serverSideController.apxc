@@ -1,0 +1,54 @@
+public class serverSideController {
+
+
+     /* generic method to retrieve the picklist values on any standard or custom sObject
+        modified from examples on trailhead & sfdcmonkey to add error handling */
+     @AuraEnabled
+     public static List <String> getselectOptions(sObject targetObject, string picklistField) {
+
+         List<String> selectOptions = new List<String>();
+         try {
+              Schema.sObjectType objectType = targetObject.getSObjectType();
+              Schema.DescribeSObjectResult objectDescribe = objectType.getDescribe();
+
+              Map<String, Schema.SObjectField> fieldMap = objectDescribe.fields.getMap();
+              List<Schema.PicklistEntry> values = fieldMap.get(picklistField).getDescribe().getPickListValues();
+
+              for (Schema.PicklistEntry a: values) {
+               selectOptions.add(a.getValue());
+              }
+
+              return selectOptions;
+
+         } catch (Exception e){
+
+              /* the CustomExceptionData class is modified from the SFDC developer blog for good practice
+               for error handling https://developer.salesforce.com/blogs/2017/09/error-handling-best-practices-lightning-apex.htm */
+              CustomExceptionData data = new CustomExceptionData('Error retrieving data.', 'Please contact your administrator if the problem persists', 123);
+              throw new AuraHandledException(JSON.serialize(data));
+         }
+      }
+
+    /* method to write our new lead to the database, the argument
+     we're passing in here is the newLead variable we created
+     in the client-side JavaScript controller */
+    @AuraEnabled
+    public static void createLead(Lead newLead, String postalCode){
+
+        Lead lead = new Lead();
+        lead = newLead;
+        lead.PostalCode = postalCode;
+
+        try {
+
+           insert newLead;
+
+        } catch(Exception e){
+
+            CustomExceptionData data = new CustomExceptionData('Server side error', 'Please contact your administrator if the problem persists', 123);
+            throw new AuraHandledException(JSON.serialize(data));
+        }
+
+    }
+
+}

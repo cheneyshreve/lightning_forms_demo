@@ -1,0 +1,96 @@
+@isTest
+private class serverSideControllerTest {
+
+    /* use the @testSetup method to create data for testing,
+       then you can reference it within your test methods */
+    @testSetup static void createData(){
+        Account acc = new Account(Name='Test New Account');
+        insert acc;
+
+        Lead testLead = new Lead(LastName='Lead Tester', Company='Salesforce');
+        insert testLead;
+    }
+
+    /* method to test getSelectOptions*/
+    @isTest static void testgetselectOptions(){
+        List<String> picklist = new List<String>();
+        Lead testLead = [SELECT Id, LastName FROM Lead WHERE LastName='Lead Tester' LIMIT 1];
+
+        Test.startTest();
+         picklist = serverSideController.getselectOptions(testLead, 'Gender__c');
+         System.assertEquals(3, picklist.size(), 'Expecting picklist to have three entries');
+         System.assertEquals('Male', picklist.get(0), 'Expecting first entry to be Male');
+         System.assertEquals('Female', picklist.get(1), 'Expecting second entry to be Female');
+         System.assertEquals('Non-binary', picklist.get(2), 'Expecting second entry to be Non-binary');
+        Test.stopTest();
+    }
+
+    /* test error handling for getSelectOptions by calling for an invalid picklist field name */
+    @isTest static void testgetSelectOptionsInvalidField(){
+        Lead testLead = [SELECT Id, LastName FROM Lead WHERE LastName='Lead Tester' LIMIT 1];
+
+        Test.startTest();
+        try {
+            if(Test.isRunningTest()){
+                serverSideController.getselectOptions(testLead, 'badFieldName');
+            }
+        } catch(AuraHandledException e){
+            System.debug(e.getMessage());
+            System.assert(e.getMessage().contains('Script-thrown exception'));
+        }
+
+        Test.stopTest();
+    }
+
+    /* test that createLead creates the new Lead */
+    @isTest static void testcreateLead(){
+
+        String postalCode = '90095';
+        Account acc = [SELECT Id FROM Account WHERE Name='Test New Account' LIMIT 1];
+        Lead newLead = new Lead();
+        newLead.Salutation = '';
+        newLead.FirstName = 'Jane';
+        newLead.LastName = 'Doe';
+        newLead.Date_Of_Birth__c = Date.today();
+        newLead.Company = 'Salesforce';
+        newLead.Street = 'Broad St';
+        newLead.City = 'Boulder';
+        newLead.State = 'CO';
+        newLead.Country = 'USA';
+        newLead.Industry = 'Technology';
+
+        Test.startTest();
+          serverSideController.createLead(newLead, postalCode);
+
+          lead createdLead = [SELECT Id, FirstName, LastName, Industry, Date_Of_Birth__c, postalCode
+                             FROM Lead WHERE Name='Jane Doe' LIMIT 1];
+          System.assertEquals('Jane', createdLead.FirstName, 'FirstName does not match');
+          System.assertEquals('Doe', createdLead.LastName, 'LastName does not match');
+          System.assertEquals('Technology', createdLead.Industry, 'Industry does not match');
+          System.assertEquals(postalCode, createdLead.PostalCode, 'Expecting postcode to match');
+        Test.stopTest();
+
+    }
+
+     /* test  error handling */
+    @isTest static void testcreateLeadException(){
+
+        String postalCode = '90095';
+        Lead missingFieldsLead = new Lead();
+        missingFieldsLead.FirstName = 'Jane';
+
+        Test.startTest();
+            try {
+                if(Test.isRunningTest()){
+                    serverSideController.createLead(missingFieldsLead, postalCode);
+                }
+            } catch(AuraHandledException e){
+                System.debug(e.getMessage());
+                System.assert(e.getMessage().contains('Script-thrown exception'));
+            }
+
+        Test.stopTest();
+    }
+
+
+}
