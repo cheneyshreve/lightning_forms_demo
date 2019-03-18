@@ -1,5 +1,6 @@
 # Lightning modal demo with basic form
-More information on this code can be found in this Medium blog.
+More information on this code can be found in this [Medium blog](https://medium.com/@cheney.shreve/working-with-forms-and-modals-in-the-aura-framework-600f3b5190f3
+)
 
 # Setup & installation
 1 - Create a new lightning component named 'basicModal' from the developer's console or your favorite IDE.<br>
